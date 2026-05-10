@@ -46,10 +46,10 @@
 [data-theme=dark] .ad-slot,[data-theme=dark] .ad-top,[data-theme=dark] .ad-mid,[data-theme=dark] .ad-bot{background:linear-gradient(135deg,rgba(79,142,247,.05),rgba(79,142,247,.1));border:1.5px dashed rgba(79,142,247,.2);}
 [data-theme=dark] .ad-slot::before,[data-theme=dark] .ad-top::before,[data-theme=dark] .ad-mid::before,[data-theme=dark] .ad-bot::before{color:#5a6480;}
 
-.ad-sticky{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--card,#fff);border-top:1px solid var(--border,#e2e5ed);padding:6px 14px;display:flex;justify-content:center;align-items:center;min-height:80px;box-shadow:0 -2px 12px rgba(0,0,0,.06);}
-.ad-sticky::before{content:'Advertisement';position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:.55rem;font-weight:700;letter-spacing:.14em;color:#9aa0b0;text-transform:uppercase;}
-.ad-sticky ins.adsbygoogle{display:block;width:100%;max-width:728px;min-height:60px;}
-.ad-sticky-close{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--bg2,#f0f2f6);border:1.5px solid var(--border,#e2e5ed);border-radius:6px;padding:3px 8px;font-size:.7rem;cursor:pointer;color:#5a6070;z-index:2;}
+
+
+
+
 
 main{display:block;width:min(820px,100%);margin:0 auto;padding:0 20px;}
 @media(max-width:640px){main{padding:0 14px;}}
@@ -127,7 +127,7 @@ img{max-width:100%;height:auto;display:block;}
 .ad-in-content{margin:28px 0;}
 
 
-.ad-sticky-close:hover{background:var(--bg2);}
+
 .ad-sidebar{margin:0 0 24px;}
 
 /* ── PAGE LAYOUT WITH SIDEBAR ── */
@@ -787,6 +787,15 @@ html { font-size: 15px; }
 
 
 
+
+/* === Improved sticky ad — hidden by default, shows on scroll, easier close === */
+.ad-sticky{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--card,#fff);border-top:1px solid var(--border,#e2e5ed);padding:8px 16px;justify-content:center;align-items:center;min-height:80px;box-shadow:0 -4px 16px rgba(0,0,0,.08);transform:translateY(100%);transition:transform .3s ease;}
+.ad-sticky.visible{display:flex;transform:translateY(0);}
+.ad-sticky::before{content:'Advertisement';position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:.55rem;font-weight:700;letter-spacing:.14em;color:#9aa0b0;text-transform:uppercase;}
+.ad-sticky ins.adsbygoogle{display:block;width:100%;max-width:728px;min-height:50px;margin-top:8px;}
+.ad-sticky-close{position:absolute;right:8px;top:8px;width:32px;height:32px;background:var(--bg2,#f0f2f6);border:1.5px solid var(--border,#e2e5ed);border-radius:50%;font-size:.95rem;cursor:pointer;color:#5a6070;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.ad-sticky-close:hover{background:var(--bg3,#e8eaf0);color:#1a1d24;}
+@media(max-width:640px){.ad-sticky{padding:8px 50px 8px 12px;min-height:70px;}.ad-sticky-close{width:36px;height:36px;font-size:1.05rem;}}
 </style>
 </head>
 <body>
@@ -938,7 +947,7 @@ function sendMsg(){
        data-ad-format="horizontal"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
-  <button class="ad-sticky-close" onclick="document.getElementById('stickyAdBar').style.display='none';document.body.style.paddingBottom='0'">&#10005;</button>
+  <button class="ad-sticky-close" type="button" aria-label="Close ad">&#10005;</button>
 </div>
 
 <footer class="site-footer">
@@ -1023,6 +1032,48 @@ function sendMsg(){
 
 
 </div>
+
+
+<script>
+/* Sticky ad: show after 400px scroll, remember 24h close preference */
+(function(){
+  var bar = document.getElementById('stickyAdBar');
+  if (!bar) return;
+  
+  // Check if user closed within last 24h
+  try {
+    var lastClose = localStorage.getItem('skg_sticky_closed');
+    if (lastClose && (Date.now() - parseInt(lastClose, 10)) < 86400000) {
+      bar.style.display = 'none';
+      return;
+    }
+  } catch(e) {}
+  
+  // Show after scrolling 400px
+  var shown = false;
+  function checkScroll() {
+    if (!shown && window.scrollY > 400) {
+      shown = true;
+      bar.classList.add('visible');
+      window.removeEventListener('scroll', checkScroll);
+    }
+  }
+  window.addEventListener('scroll', checkScroll, { passive: true });
+  checkScroll(); // in case already scrolled
+  
+  // Wire up close button
+  var closeBtn = bar.querySelector('.ad-sticky-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      bar.classList.remove('visible');
+      setTimeout(function(){ bar.style.display = 'none'; }, 300);
+      try { localStorage.setItem('skg_sticky_closed', Date.now().toString()); } catch(e) {}
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
